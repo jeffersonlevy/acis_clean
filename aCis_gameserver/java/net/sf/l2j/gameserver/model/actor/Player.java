@@ -97,6 +97,7 @@ import net.sf.l2j.gameserver.model.AccessLevel;
 import net.sf.l2j.gameserver.model.PetDataEntry;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.WorldObject;
+import net.sf.l2j.gameserver.model.actor.ai.type.Bot;
 import net.sf.l2j.gameserver.model.actor.ai.type.PlayerAI;
 import net.sf.l2j.gameserver.model.actor.attack.PlayerAttack;
 import net.sf.l2j.gameserver.model.actor.cast.PlayerCast;
@@ -8001,4 +8002,24 @@ public final class Player extends Playable
 		
 		return gms;
 	}
+
+	private final Bot _bot = new Bot(this);
+	
+	public Bot getBot()
+	{
+		return _bot;
+	}
+	
+	private boolean _autofarm;
+	
+	public void setAutoFarm(boolean farm)
+	{
+		_autofarm = farm;
+	}
+	
+	public boolean isAutoFarm()
+	{
+		return _autofarm;
+	}
+	
 }

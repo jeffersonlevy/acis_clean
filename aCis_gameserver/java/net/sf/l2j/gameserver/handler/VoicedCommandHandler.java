@@ -3,6 +3,7 @@ package net.sf.l2j.gameserver.handler;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.sf.l2j.gameserver.handler.voicedcommandhandlers.AutoFarm;
 import net.sf.l2j.gameserver.handler.voicedcommandhandlers.EventCommand;
 import net.sf.l2j.gameserver.handler.voicedcommandhandlers.Menu;
 import net.sf.l2j.gameserver.handler.voicedcommandhandlers.OfflinePlayer;
@@ -20,6 +21,7 @@ public class VoicedCommandHandler
 		registerHandler(new OfflinePlayer());
 		registerHandler(new PremiumStatus());
 		registerHandler(new EventCommand());
+		registerHandler(new AutoFarm());
 	}
 	
 	public void registerHandler(IVoicedCommandHandler handler)

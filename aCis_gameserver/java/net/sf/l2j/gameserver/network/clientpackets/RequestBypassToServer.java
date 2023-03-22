@@ -320,6 +320,11 @@ public final class RequestBypassToServer extends L2GameClientPacket
 			IVoicedCommandHandler vch = VoicedCommandHandler.getInstance().getHandler("mod_menu_");
 			vch.useVoicedCommand(_command, player, null);
 		}
+		else if (_command.startsWith("farm_"))
+		{
+			IVoicedCommandHandler vch = VoicedCommandHandler.getInstance().getHandler("farm_");
+			vch.useVoicedCommand(_command, player, null);
+		}
 	}
 	
 	public static void showNpcStatsInfos(Player player, Npc npc, NpcHtmlMessage html)

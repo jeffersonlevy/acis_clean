@@ -350,17 +350,10 @@
 		<set name="use_condition" val="{{uc_transmode_exclude;{tt_flying}}}" />
 	</item>
 	<item id="728" type="EtcItem" name="Mana Potion">
-		<set name="icon" val="icon.etc_reagent_blue_i00" />
-		<set name="default_action" val="skill_reduce" />
-		<set name="etcitem_type" val="POTION" />
 		<set name="material" val="LIQUID" />
-		<set name="weight" val="180" />
-		<set name="price" val="2000" />
+		<set name="price" val="1" />
+		<set name="handler" val="ManaPotion" />
 		<set name="is_stackable" val="true" />
-		<set name="is_oly_restricted" val="true" />
-		<set name="handler" val="ItemSkills" />
-		<set name="item_skill" val="7104-1" />
-		<set name="use_condition" val="{{uc_transmode_exclude;{tt_flying}}}" />
 	</item>
 	<item id="729" type="EtcItem" name="Scroll: Enchant Weapon (Grade A)">
 		<set name="icon" val="icon.etc_scroll_of_enchant_weapon_i04" />

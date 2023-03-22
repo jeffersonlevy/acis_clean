@@ -1508,4 +1508,23 @@ public abstract class L2Skill implements IChanceSkillTrigger
 	{
 		return _icon;
 	}
+
+	public final boolean isHeal()
+	{
+		switch (_skillType)
+		{
+			case HEAL:
+			case MANAHEAL:
+			case COMBATPOINTHEAL:
+			case HOT:
+			case MPHOT:
+			case BALANCE_LIFE:
+			case HEAL_STATIC:
+			case MANARECHARGE:
+			case HEAL_PERCENT:
+			case MANAHEAL_PERCENT:
+				return true;
+		}
+		return false;
+	}
 }

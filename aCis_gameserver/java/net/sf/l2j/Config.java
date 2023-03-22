@@ -922,6 +922,8 @@ public final class Config
 	public static Map<Integer, Integer> DUALBOX_CHECK_WHITELIST;
 	
 	public static List<Integer> AUTO_LOOT_ITEM_IDS;
+	public static boolean INFINITY_MANAPOT;
+	public static int MAX_MP;
 	
 	/**
 	 * Initialize {@link ExProperties} from specified configuration file.
@@ -2704,6 +2706,8 @@ public final class Config
 			if (itm != 0)
 				AUTO_LOOT_ITEM_IDS.add(itm);
 		}
+		INFINITY_MANAPOT =  rusacis.getProperty("InfinityManaPot", false);
+		MAX_MP = Integer.parseInt(rusacis.getProperty("MaxMpRecovery", "400"));
 	}
 	
 	/**

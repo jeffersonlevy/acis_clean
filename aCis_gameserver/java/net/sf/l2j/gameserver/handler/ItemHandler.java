@@ -17,6 +17,7 @@ import net.sf.l2j.gameserver.handler.itemhandlers.FishShots;
 import net.sf.l2j.gameserver.handler.itemhandlers.Harvesters;
 import net.sf.l2j.gameserver.handler.itemhandlers.ItemSkills;
 import net.sf.l2j.gameserver.handler.itemhandlers.Keys;
+import net.sf.l2j.gameserver.handler.itemhandlers.ManaPotion;
 import net.sf.l2j.gameserver.handler.itemhandlers.Maps;
 import net.sf.l2j.gameserver.handler.itemhandlers.MercenaryTickets;
 import net.sf.l2j.gameserver.handler.itemhandlers.PaganKeys;
@@ -67,6 +68,7 @@ public class ItemHandler
 		registerHandler(new SoulCrystals());
 		registerHandler(new SpiritShots());
 		registerHandler(new SummonItems());
+		registerHandler(new ManaPotion());
 	}
 	
 	private void registerHandler(IItemHandler handler)

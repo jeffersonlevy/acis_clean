@@ -97,6 +97,7 @@ import net.sf.l2j.gameserver.model.olympiad.OlympiadGameManager;
 import net.sf.l2j.gameserver.network.GameClient;
 import net.sf.l2j.gameserver.network.GamePacketHandler;
 import net.sf.l2j.gameserver.taskmanager.AttackStanceTaskManager;
+import net.sf.l2j.gameserver.taskmanager.AutofarmResetTaskManager;
 import net.sf.l2j.gameserver.taskmanager.DecayTaskManager;
 import net.sf.l2j.gameserver.taskmanager.DelayedItemsManager;
 import net.sf.l2j.gameserver.taskmanager.GameTimeTaskManager;
@@ -250,7 +251,8 @@ public class GameServer
 		
 		StringUtil.printSection("Quests & Scripts");
 		ScriptData.getInstance();
-		
+
+		AutofarmResetTaskManager.getInstance();
 		if (Config.ALLOW_BOAT)
 		{
 			BoatManager.getInstance();
