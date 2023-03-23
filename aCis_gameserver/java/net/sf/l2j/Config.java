@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
 import net.sf.l2j.commons.config.ExProperties;
@@ -25,6 +24,10 @@ import net.sf.l2j.commons.math.MathUtil;
 import net.sf.l2j.gameserver.enums.GeoType;
 import net.sf.l2j.gameserver.model.holder.IntIntHolder;
 import net.sf.l2j.gameserver.model.olympiad.enums.OlympiadPeriod;
+
+import org.apache.commons.lang3.ArrayUtils;
+
+
 
 /**
  * This class contains global server configuration.<br>
@@ -468,7 +471,6 @@ public final class Config
 	
 	/** Class Master */
 	public static boolean ALLOW_ENTIRE_TREE;
-	public static ClassMasterSettings CLASS_MASTER_SETTINGS;
 	
 	/** Wedding Manager */
 	public static int WEDDING_PRICE;
@@ -858,6 +860,13 @@ public final class Config
 	/** Infinity SS and Arrows */
 	public static boolean INFINITY_SS;
 	public static boolean INFINITY_ARROWS;
+	public static List<Integer> ALLOW_CLASS_MASTERS_LIST = new ArrayList<>();
+	//public static ArrayList<Integer> ALLOW_CLASS_MASTERS_LIST = new ArrayList<>();
+	public static long[] CLASS_MASTERS_PRICE_LIST;
+	public static int[] CLASS_MASTERS_PRICE_ITEM;
+	public static int[] CLASS_MASTERS_REWARD_ITEM;
+	public static long[] CLASS_MASTERS_REWARD_AMOUNT;
+
 	
 	/** Olympiad Period */
 	public static boolean OLY_USE_CUSTOM_PERIOD_SETTINGS;
@@ -2157,7 +2166,7 @@ public final class Config
 		CHAMPION_AURA = npcs.getProperty("ChampionAura", 0);
 		
 		ALLOW_ENTIRE_TREE = npcs.getProperty("AllowEntireTree", false);
-		CLASS_MASTER_SETTINGS = new ClassMasterSettings(npcs.getProperty("ConfigClassMaster"));
+		
 		
 		WEDDING_PRICE = npcs.getProperty("WeddingPrice", 1000000);
 		WEDDING_SAMESEX = npcs.getProperty("WeddingAllowSameSex", false);
@@ -2708,6 +2717,33 @@ public final class Config
 		}
 		INFINITY_MANAPOT =  rusacis.getProperty("InfinityManaPot", false);
 		MAX_MP = Integer.parseInt(rusacis.getProperty("MaxMpRecovery", "400"));
+
+		
+		/*ALLOW_CLASS_MASTERS_LIST = new ArrayList<>();
+		for (String id : rusacis.getProperty("AllowClassMasters", "0").split(","))
+		{
+			ALLOW_CLASS_MASTERS_LIST.add(Integer.valueOf(id));
+		}*/
+		for(int id : rusacis.getProperty("AllowClassMasters", ArrayUtils.EMPTY_INT_ARRAY))
+		{
+			if(id != 0)
+				ALLOW_CLASS_MASTERS_LIST.add(id);
+			
+		}
+		
+		/*for(int id : rusacis.getProperty("AllowClassMasters", ArrayUtils.EMPTY_INT_ARRAY))
+		{
+			if(id != 0)
+			{
+				ALLOW_CLASS_MASTERS_LIST.add(id);
+			}
+			
+		}*/
+		CLASS_MASTERS_PRICE_LIST = rusacis.getProperty("ClassMastersPrice", new long[] {0, 0, 0});
+		CLASS_MASTERS_PRICE_ITEM = rusacis.getProperty("ClassMastersPriceItem", new int[] {57, 57, 57});
+		CLASS_MASTERS_REWARD_ITEM = rusacis.getProperty("ClassMastersReward", new int[] {0, 0, 0});
+		CLASS_MASTERS_REWARD_AMOUNT = rusacis.getProperty("ClassMastersRewardAmount", new long[] {0, 0, 0});
+
 	}
 	
 	/**
@@ -2803,7 +2839,7 @@ public final class Config
 		// login settings
 		loadLogin();
 	}
-	
+	/*
 	public static final class ClassMasterSettings
 	{
 		private final Map<Integer, Boolean> _allowedClassChange;
@@ -2882,5 +2918,5 @@ public final class Config
 		{
 			return _claimItems.get(job);
 		}
-	}
+	}*/
 }

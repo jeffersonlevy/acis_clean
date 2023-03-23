@@ -11,8 +11,12 @@ import java.util.regex.PatternSyntaxException;
 
 import net.sf.l2j.commons.logging.CLogger;
 
+import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.util.LocalizationStorage;
+
 public final class StringUtil
 {
+	private static NumberFormat adenaFormatter;
 	public static final String DIGITS = "0123456789";
 	public static final String LOWER_CASE_LETTERS = "abcdefghijklmnopqrstuvwxyz";
 	public static final String UPPER_CASE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -238,5 +242,17 @@ public final class StringUtil
 			return Integer.parseInt(timestamp.split("s")[0]);
 		
 		return 0;
+	}
+	
+	public static String formatAdena(long amount)
+	{
+		adenaFormatter = NumberFormat.getIntegerInstance(Locale.ENGLISH);
+		return adenaFormatter.format(amount);
+	}
+	
+	public static String htmlClassName(int classId, Player player)
+	{
+		//return new CustomMessage(String.format("ClassName.%d", classId), player, new Object[0]).toString();
+		return LocalizationStorage.getInstance().getString(player.isLangString(),(String.format("ClassName.%d", classId))).toString();
 	}
 }

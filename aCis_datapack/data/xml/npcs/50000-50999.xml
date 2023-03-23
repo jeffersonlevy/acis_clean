@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <list>
-	<npc id="50000" idTemplate="31228" name="Roy the Cat" title="Class Manager">
+	<npc id="31860" idTemplate="31228" name="Roy the Cat" title="Class Manager">
 		<set name="usingServerSideName" val="true"/>
 		<set name="usingServerSideTitle" val="true"/>
 		<set name="level" val="70"/>

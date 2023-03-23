@@ -1,305 +1,153 @@
 package net.sf.l2j.gameserver.model.actor.instance;
 
-import java.util.List;
+import java.util.StringTokenizer;
 
 import net.sf.l2j.commons.lang.StringUtil;
 
 import net.sf.l2j.Config;
-import net.sf.l2j.gameserver.data.xml.PlayerData;
+import net.sf.l2j.gameserver.data.xml.ItemData;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
-import net.sf.l2j.gameserver.model.holder.IntIntHolder;
+import net.sf.l2j.gameserver.model.item.kind.Item;
 import net.sf.l2j.gameserver.network.SystemMessageId;
+import net.sf.l2j.gameserver.network.serverpackets.MagicSkillUse;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
-import net.sf.l2j.gameserver.network.serverpackets.UserInfo;
+import net.sf.l2j.util.LocalizationStorage;
 
-/**
- * Custom class allowing you to choose your class.<br>
- * <br>
- * You can customize class rewards as needed items. Check npc.properties for more informations.<br>
- * This NPC type got 2 differents ways to level:
- * <ul>
- * <li>the normal one, where you have to be at least of the good level.<br>
- * NOTE : you have to take 1st class then 2nd, if you try to take 2nd directly it won't work.</li>
- * <li>the "allow_entire_tree" version, where you can take class depending of your current path.<br>
- * NOTE : you don't need to be of the good level.</li>
- * </ul>
- * Added to the "change class" function, this NPC can noblesse and give available skills (related to your current class and level).
- */
-public final class ClassMaster extends Folk
+public final class ClassMaster extends Merchant
 {
 	public ClassMaster(int objectId, NpcTemplate template)
 	{
 		super(objectId, template);
 	}
 	
-	@Override
-	public String getHtmlPath(Player player, int npcId, int val)
+	private String makeMessage(Player player)
 	{
-		return player.isLang() + "mods/classmaster/" + npcId + ((val == 0) ? "" : ("-" + val)) + ".htm";
+		ClassId classId = player.getClassId();
+		int jobLevel = classId.getLevel() + 1;
+		int level = player.getStatus().getLevel();
+		StringBuilder sb = new StringBuilder();
+		final NpcHtmlMessage html = new NpcHtmlMessage(0);
+		if (Config.ALLOW_CLASS_MASTERS_LIST.isEmpty() || !Config.ALLOW_CLASS_MASTERS_LIST.contains(jobLevel))
+		{
+			jobLevel = 4;
+		}
+		
+		if ((level >= 20 && jobLevel == 1 || level >= 40 && jobLevel == 2 || level >= 76 && jobLevel == 3) && Config.ALLOW_CLASS_MASTERS_LIST.contains(jobLevel))
+		{
+			int jobLevelPriceIdx = jobLevel - 1;
+			Item item = ItemData.getInstance().getTemplate(Config.CLASS_MASTERS_PRICE_ITEM[jobLevelPriceIdx]);
+			if (Config.CLASS_MASTERS_PRICE_LIST[jobLevelPriceIdx] > 0)
+			{
+				sb.append("Price: ").append(StringUtil.formatAdena(Config.CLASS_MASTERS_PRICE_LIST[jobLevelPriceIdx])).append(" ").append(item.getName()).append("<br1>");
+			}
+			for (ClassId cid : ClassId.VALUES)
+			{
+				if (!cid.isChildOf(classId) || cid.getLevel() != classId.getLevel() + 1)
+					continue;
+				sb.append("<a action=\"bypass -h npc_").append(getObjectId()).append("_change_class ").append(cid.getId()).append(" ").append(jobLevelPriceIdx).append("\">").append(StringUtil.htmlClassName(cid.getId(), player)).append("</a><br>");
+			}
+			html.setHtml(sb.toString());
+			player.sendPacket(html);
+		}
+		else
+		{
+			switch (jobLevel)
+			{
+				case 1:
+				{
+					sb.append(LocalizationStorage.getInstance().getString(player.isLangString(), "Need20Level"));
+					break;
+				}
+				case 2:
+				{
+					sb.append(LocalizationStorage.getInstance().getString(player.isLangString(), "Need40Level"));
+					break;
+				}
+				case 3:
+				{
+					sb.append(LocalizationStorage.getInstance().getString(player.isLangString(), "Need76Level"));
+					break;
+				}
+				case 4:
+				{
+					sb.append(LocalizationStorage.getInstance().getString(player.isLangString(), "NothingToUp"));
+				}
+			}
+		}
+		return sb.toString();
 	}
 	
 	@Override
 	public void onBypassFeedback(Player player, String command)
 	{
-		if (command.startsWith("1stClass"))
-			showHtmlMenu(player, getObjectId(), 1);
-		else if (command.startsWith("2ndClass"))
-			showHtmlMenu(player, getObjectId(), 2);
-		else if (command.startsWith("3rdClass"))
-			showHtmlMenu(player, getObjectId(), 3);
-		else if (command.startsWith("change_class"))
+		StringTokenizer st = new StringTokenizer(command);
+		if (st.nextToken().equals("change_class"))
 		{
-			final int val = Integer.parseInt(command.substring(13));
-			
-			if (checkAndChangeClass(player, val))
+			int val = Integer.parseInt(st.nextToken());
+			int idx = Integer.parseInt(st.nextToken());
+			if (idx < Config.CLASS_MASTERS_PRICE_ITEM.length && idx < Config.CLASS_MASTERS_PRICE_LIST.length)
 			{
-				final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
-				html.setFile(getHtmlPath(player, getNpcId(), 4));
-				html.replace("%name%", PlayerData.getInstance().getClassNameById(val));
-				player.sendPacket(html);
-			}
-		}
-		else if (command.startsWith("become_noble"))
-		{
-			final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
-			
-			if (player.isNoble())
-				html.setFile(getHtmlPath(player, getNpcId(), 5));
-			else
-			{
-				html.setFile(getHtmlPath(player, getNpcId(), 6));
-				player.setNoble(true, true);
-				player.sendPacket(new UserInfo(player));
-			}
-			player.sendPacket(html);
-		}
-		else if (command.startsWith("learn_skills"))
-			player.rewardSkills();
-		else
-			super.onBypassFeedback(player, command);
-	}
-	
-	private final void showHtmlMenu(Player player, int objectId, int level)
-	{
-		final NpcHtmlMessage html = new NpcHtmlMessage(objectId);
-		
-		if (!Config.CLASS_MASTER_SETTINGS.isAllowed(level))
-		{
-			final StringBuilder sb = new StringBuilder(100);
-			sb.append("<html><body>");
-			
-			switch (player.getClassId().getLevel())
-			{
-				case 0:
-					if (Config.CLASS_MASTER_SETTINGS.isAllowed(1))
-						sb.append("Come back here when you reached level 20 to change your class.<br>");
-					else if (Config.CLASS_MASTER_SETTINGS.isAllowed(2))
-						sb.append("Come back after your first occupation change.<br>");
-					else if (Config.CLASS_MASTER_SETTINGS.isAllowed(3))
-						sb.append("Come back after your second occupation change.<br>");
-					else
-						sb.append("I can't change your occupation.<br>");
-					break;
-				
-				case 1:
-					if (Config.CLASS_MASTER_SETTINGS.isAllowed(2))
-						sb.append("Come back here when you reached level 40 to change your class.<br>");
-					else if (Config.CLASS_MASTER_SETTINGS.isAllowed(3))
-						sb.append("Come back after your second occupation change.<br>");
-					else
-						sb.append("I can't change your occupation.<br>");
-					break;
-				
-				case 2:
-					if (Config.CLASS_MASTER_SETTINGS.isAllowed(3))
-						sb.append("Come back here when you reached level 76 to change your class.<br>");
-					else
-						sb.append("I can't change your occupation.<br>");
-					break;
-				
-				case 3:
-					sb.append("There is no class change available for you anymore.<br>");
-					break;
-			}
-			sb.append("</body></html>");
-			html.setHtml(sb.toString());
-		}
-		else
-		{
-			final ClassId currentClassId = player.getClassId();
-			if (currentClassId.getLevel() >= level)
-				html.setFile(getHtmlPath(player, getNpcId(), 1));
-			else
-			{
-				final int minLevel = getMinLevel(currentClassId.getLevel());
-				if (player.getStatus().getLevel() >= minLevel || Config.ALLOW_ENTIRE_TREE)
+				int itemId = Config.CLASS_MASTERS_PRICE_ITEM[idx];
+				long itemCount = Config.CLASS_MASTERS_PRICE_LIST[idx];
+				if (player.getInventory().destroyItemByItemId("change_class", itemId, (int) itemCount, player, null) != null)
 				{
-					final StringBuilder menu = new StringBuilder(100);
-					for (ClassId cid : ClassId.VALUES)
+					changeClass(player, val);
+					if (Config.CLASS_MASTERS_REWARD_ITEM.length > idx && Config.CLASS_MASTERS_REWARD_ITEM[idx] > 0 && Config.CLASS_MASTERS_REWARD_AMOUNT.length > idx && Config.CLASS_MASTERS_REWARD_AMOUNT[idx] > 0)
 					{
-						if (cid.getLevel() != level)
-							continue;
-						
-						if (validateClassId(currentClassId, cid))
-							StringUtil.append(menu, "<a action=\"bypass -h npc_%objectId%_change_class ", cid.getId(), "\">", PlayerData.getInstance().getClassNameById(cid.getId()), "</a><br>");
+						player.getInventory().addItem("", Config.CLASS_MASTERS_REWARD_ITEM[idx], (int) Config.CLASS_MASTERS_REWARD_AMOUNT[idx], player, player);
 					}
-					
-					if (menu.length() > 0)
-					{
-						html.setFile(getHtmlPath(player, getNpcId(), 2));
-						html.replace("%name%", PlayerData.getInstance().getClassNameById(currentClassId.getId()));
-						html.replace("%menu%", menu.toString());
-					}
-					else
-					{
-						html.setFile(getHtmlPath(player, getNpcId(), 3));
-						html.replace("%level%", getMinLevel(level - 1));
-					}
+				}
+				else if (itemId == 57)
+				{
+					player.sendPacket(SystemMessageId.YOU_NOT_ENOUGH_ADENA);
 				}
 				else
 				{
-					if (minLevel < Integer.MAX_VALUE)
-					{
-						html.setFile(getHtmlPath(player, getNpcId(), 3));
-						html.replace("%level%", minLevel);
-					}
-					else
-						html.setFile(getHtmlPath(player, getNpcId(), 1));
+					player.sendPacket(SystemMessageId.INCORRECT_ITEM_COUNT);
 				}
 			}
+			else
+			{
+				System.out.println("Incorect job index " + idx);
+			}
+		}
+		else
+		{
+			super.onBypassFeedback(player, command);
 		}
 		
-		html.replace("%objectId%", objectId);
-		html.replace("%req_items%", getRequiredItems(level));
+	}
+	
+	private void changeClass(Player player, int val)
+	{
+		if (player.getClassId().getLevel() == 3)
+		{
+			player.sendPacket(SystemMessageId.THIRD_CLASS_TRANSFER);
+		}
+		else
+		{
+			player.sendPacket(SystemMessageId.CLASS_TRANSFER);
+		}
+		player.setClassId(val);
+		player.broadcastCharInfo();
+		player.broadcastPacket(new MagicSkillUse(player, player, 4339, 1, 0, 0));
+	}
+	
+	@Override
+	public String getHtmlPath(Player player, final int npcId, final int val)
+	{
+		return player.isLang() + "custom/" + npcId + "" + (val == 0 ? "" : "-" + val) + ".htm";
+	}
+	
+	@Override
+	public void showChatWindow(Player player, int val)
+	{
+		final NpcHtmlMessage html = new NpcHtmlMessage(0);
+		html.setFile(getHtmlPath(player, getNpcId(), 0));
+		html.replace("%classmaster%", makeMessage(player));
 		player.sendPacket(html);
 	}
 	
-	private static final boolean checkAndChangeClass(Player player, int val)
-	{
-		final ClassId currentClassId = player.getClassId();
-		if (getMinLevel(currentClassId.getLevel()) > player.getStatus().getLevel() && !Config.ALLOW_ENTIRE_TREE)
-			return false;
-		
-		if (!validateClassId(currentClassId, val))
-			return false;
-		
-		int newJobLevel = currentClassId.getLevel() + 1;
-		
-		// Weight/Inventory check
-		if (!Config.CLASS_MASTER_SETTINGS.getRewardItems(newJobLevel).isEmpty())
-		{
-			if (player.getWeightPenalty().ordinal() > 2)
-			{
-				player.sendPacket(SystemMessageId.INVENTORY_LESS_THAN_80_PERCENT);
-				return false;
-			}
-		}
-		
-		final List<IntIntHolder> neededItems = Config.CLASS_MASTER_SETTINGS.getRequiredItems(newJobLevel);
-		
-		// check if player have all required items for class transfer
-		for (IntIntHolder item : neededItems)
-		{
-			if (player.getInventory().getItemCount(item.getId()) < item.getValue())
-			{
-				player.sendPacket(SystemMessageId.NOT_ENOUGH_ITEMS);
-				return false;
-			}
-		}
-		
-		// get all required items for class transfer
-		for (IntIntHolder item : neededItems)
-		{
-			if (!player.destroyItemByItemId("ClassMaster", item.getId(), item.getValue(), player, true))
-				return false;
-		}
-		
-		// reward player with items
-		for (IntIntHolder item : Config.CLASS_MASTER_SETTINGS.getRewardItems(newJobLevel))
-			player.addItem("ClassMaster", item.getId(), item.getValue(), player, true);
-		
-		player.setClassId(val);
-		
-		if (player.isSubClassActive())
-			player.getSubClasses().get(player.getClassIndex()).setClassId(player.getActiveClass());
-		else
-			player.setBaseClass(player.getActiveClass());
-		
-		player.refreshHennaList();
-		player.broadcastUserInfo();
-		return true;
-	}
-	
-	/**
-	 * @param level - current skillId level (0 - start, 1 - first, etc)
-	 * @return minimum player level required for next class transfer
-	 */
-	private static final int getMinLevel(int level)
-	{
-		switch (level)
-		{
-			case 0:
-				return 20;
-			case 1:
-				return 40;
-			case 2:
-				return 76;
-			default:
-				return Integer.MAX_VALUE;
-		}
-	}
-	
-	/**
-	 * Returns true if class change is possible
-	 * @param oldCID current player ClassId
-	 * @param val new class index
-	 * @return
-	 */
-	private static final boolean validateClassId(ClassId oldCID, int val)
-	{
-		try
-		{
-			return validateClassId(oldCID, ClassId.VALUES[val]);
-		}
-		catch (Exception e)
-		{
-			// possible ArrayOutOfBoundsException
-		}
-		return false;
-	}
-	
-	/**
-	 * Returns true if class change is possible
-	 * @param oldCID current player ClassId
-	 * @param newCID new ClassId
-	 * @return true if class change is possible
-	 */
-	private static final boolean validateClassId(ClassId oldCID, ClassId newCID)
-	{
-		if (newCID == null)
-			return false;
-		
-		if (oldCID == newCID.getParent())
-			return true;
-		
-		if (Config.ALLOW_ENTIRE_TREE && newCID.isChildOf(oldCID))
-			return true;
-		
-		return false;
-	}
-	
-	private static String getRequiredItems(int level)
-	{
-		final List<IntIntHolder> neededItems = Config.CLASS_MASTER_SETTINGS.getRequiredItems(level);
-		if (neededItems == null || neededItems.isEmpty())
-			return "<tr><td>none</td></tr>";
-		
-		final StringBuilder sb = new StringBuilder();
-		for (IntIntHolder item : neededItems)
-			StringUtil.append(sb, "<tr><td><font color=\"LEVEL\">", item.getValue(), "</font></td><td>&#", item.getId(), "</td></tr>");
-		
-		return sb.toString();
-	}
 }

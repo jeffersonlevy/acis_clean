@@ -3,10 +3,15 @@ package net.sf.l2j.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.sf.l2j.commons.logging.CLogger;
+
 public class CustomMessage
 {
-	private final String address;
+	
+	public static final CLogger LOGGER = new CLogger(CustomMessage.class.getName());
+	private String address;
 	private List<Object> params = new ArrayList<>();
+	
 	
 	public CustomMessage(String address)
 	{
@@ -34,6 +39,12 @@ public class CustomMessage
 		}
 		
 		return this;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return address;
 	}
 	
 	public String toString(String lang)

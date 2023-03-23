@@ -7,7 +7,7 @@ import net.sf.l2j.gameserver.model.actor.Player;
 public final class NpcHtmlMessage extends L2GameServerPacket
 {
 	// Shared "config" used by Players GMs to see file directory.
-	public static boolean SHOW_FILE;
+	public static boolean SHOW_FILE = true;
 	
 	private final int _objectId;
 	
